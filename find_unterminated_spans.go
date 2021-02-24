@@ -18,6 +18,11 @@ func findUnterminatedSpans(traces map[string]trace) unterminatedSpans {
 			var parentSpanChain = computeParentChain(trace, spanID)
 			var operationChain = computeOperationChainString(trace, parentSpanChain)
 
+			// Let's ignore strings were the root span is unclosed
+			if strings.HasPrefix(operationChain, "UNCLOSED SPAN") {
+				continue
+			}
+
 			if _, ok := unclosedSpans[operationChain]; !ok {
 				unclosedSpans[operationChain] = unterminatedSpan{}
 			}

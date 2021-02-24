@@ -11,7 +11,7 @@ var dotnetOpeningRegexp = regexp.MustCompile(`Span started: \[s_id: (.+?), p_id:
 
 var dotnetClosingRegexp = regexp.MustCompile(`Span closed: \[s_id: (.+?), p_id: (.+?), t_id: (.+?)\]`)
 var dotnetClosingOperationNameRegexp = regexp.MustCompile(`Operation: (.+?),`)
-var dotnetClosingTagsRegexp = regexp.MustCompile(`Tags: [(.+)]`)
+var dotnetClosingTagsRegexp = regexp.MustCompile(`Tags: \[(.+)\]`)
 var dotnetClosingServiceNameRegexp = regexp.MustCompile(`Service: (.+?),`)
 
 type dotnetParser struct{}
@@ -25,7 +25,6 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 
 		if dotnetOpeningRegexp.MatchString(line) {
 			var matches = dotnetOpeningRegexp.FindStringSubmatch(line)
-			originalRow := matches[0]
 			traceID := matches[3]
 			spanID := matches[1]
 			parentID := matches[2]
@@ -37,12 +36,11 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 				}
 			}
 
-			traces[traceID].Openings[spanID] = spanOpening{parentID, originalRow}
+			traces[traceID].Openings[spanID] = spanOpening{parentID, line}
 		}
 
 		if dotnetClosingRegexp.MatchString(line) {
 			var matches = dotnetClosingRegexp.FindStringSubmatch(line)
-			originalRow := matches[0]
 			traceID := matches[3]
 			spanID := matches[1]
 			parentID := matches[2]
@@ -74,7 +72,7 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 				serviceName = match[1]
 			}
 
-			traces[traceID].Closings[spanID] = spanClosing{parentID, originalRow, serviceName, operationName, tags}
+			traces[traceID].Closings[spanID] = spanClosing{parentID, line, serviceName, operationName, tags}
 		}
 	}
 
