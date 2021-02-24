@@ -22,7 +22,10 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	traces := extractTracesFromLogStream(reader)
+	// TODO: Currently, only a parser for .NET is available, make it possible to choose another parser
+	// using a CLI flag
+	parser := dotnetParser{}
+	traces := parser.extractTracesFromLogStream(reader)
 
 	unclosedSpans := findUnterminatedSpans(traces)
 

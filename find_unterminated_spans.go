@@ -2,6 +2,8 @@ package main
 
 import "fmt"
 
+// TODO: unit test these methods
+
 // map of unclosed span parent chain string ==> unclosed occurences
 type unterminatedSpans map[string]int
 
