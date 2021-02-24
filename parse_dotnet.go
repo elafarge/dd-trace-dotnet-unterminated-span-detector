@@ -75,6 +75,13 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 				serviceName = match[1]
 			}
 
+			if _, ok := traces[traceID]; !ok {
+				traces[traceID] = trace{
+					Openings: map[string]spanOpening{},
+					Closings: map[string]spanClosing{},
+				}
+			}
+
 			traces[traceID].Closings[spanID] = spanClosing{
 				ParentID:      parentID,
 				OriginalRow:   line,
