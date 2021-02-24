@@ -38,4 +38,9 @@ func main() {
 		panic(err2)
 	}
 	fmt.Println(string(result))
+	if len(unclosedSpans) == 0 {
+		os.Exit(0)
+	} else {
+		os.Exit(1)
+	}
 }

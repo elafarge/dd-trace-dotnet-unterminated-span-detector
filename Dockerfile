@@ -12,4 +12,4 @@ RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o $GOPATH/bin/dd-trace-do
 
 FROM scratch
 COPY --from=builder /go/bin/dd-trace-dotnet-unterminated-span-detector .
-ENTRYPOINT ["dd-trace-dotnet-unterminated-span-detector"]
+ENTRYPOINT ["./dd-trace-dotnet-unterminated-span-detector"]
