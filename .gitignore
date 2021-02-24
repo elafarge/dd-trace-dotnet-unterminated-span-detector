@@ -33,5 +33,8 @@ tags
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# Dependency directories
+vendor/
+
+# Target binary default "go build" name
+dd-trace-dotnet-unterminated-span-detector
