@@ -1,48 +1,94 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // TODO: unit test these methods
-
-// map of unclosed span parent chain string ==> unclosed occurences
-type unterminatedSpans map[string]int
 
 func findUnterminatedSpans(traces map[string]trace) unterminatedSpans {
 	unclosedSpans := unterminatedSpans{}
 	for _, trace := range traces {
-		for spanID, spanOpening := range trace.Openings {
+		for spanID := range trace.Openings {
 			if _, ok := trace.Closings[spanID]; ok {
 				continue
 			}
 
-			var parentChain = fmt.Sprintf("%s UNCLOSED SPAN", computeParentChain(trace, spanOpening.ParentID))
-			if _, ok := unclosedSpans[parentChain]; !ok {
-				unclosedSpans[parentChain] = 0
+			var parentSpanChain = computeParentChain(trace, spanID)
+			var operationChain = computeOperationChainString(trace, parentSpanChain)
+
+			if _, ok := unclosedSpans[operationChain]; !ok {
+				unclosedSpans[operationChain] = unterminatedSpan{}
 			}
-			unclosedSpans[parentChain] = unclosedSpans[parentChain] + 1
+			unclosedSpans[operationChain] = unterminatedSpan{
+				unclosedSpans[operationChain].Occurences + 1,
+				append(unclosedSpans[operationChain].Traces, buildTraceTree(trace, parentSpanChain[0])),
+			}
+
 		}
 	}
 	return unclosedSpans
 }
 
-func computeParentChain(trace trace, parentID string) string {
-	if parentID == "null" {
-		return ""
-	}
-
-	var parentSpan, ok = trace.Closings[parentID]
-	var nextParentID = parentSpan.ParentID
-	var operationName = parentSpan.OperationName
-	var tags = parentSpan.Tags
+func buildTraceTree(trace trace, spanID string) *spanNode {
+	opening, ok := trace.Openings[spanID]
 	if !ok {
-		// missing parent closing, let's try with the opening
-		var parentSpanOpening, okdoki = trace.Openings[parentID]
-		if !okdoki {
-			return "MISSING PARENT SPAN - BROKEN CHAIN"
-		}
-		nextParentID = parentSpanOpening.ParentID
-		operationName = "UNCLOSED SPAN"
+		return nil
 	}
 
-	return fmt.Sprintf("%s %s[%s] >", computeParentChain(trace, nextParentID), operationName, tags)
+	children := []*spanNode{}
+	for childSpanID, opening := range trace.Openings {
+		if opening.ParentID == spanID {
+			children = append(children, buildTraceTree(trace, childSpanID))
+		}
+	}
+
+	closing, ok := trace.Closings[spanID]
+	if !ok {
+		return &spanNode{
+			spanID,
+			opening.ParentID,
+			"unclosed",
+			"unclosed",
+			opening.OriginalRow,
+			"unclosed",
+			children,
+		}
+	}
+
+	return &spanNode{
+		spanID,
+		opening.ParentID,
+		fmt.Sprintf("%s:%s", closing.ServiceName, closing.OperationName),
+		closing.Tags,
+		opening.OriginalRow,
+		closing.OriginalRow,
+		children,
+	}
+}
+
+func computeParentChain(trace trace, parentID string) []string {
+	if parentID == "null" {
+		return nil
+	}
+
+	var parentSpan, ok = trace.Openings[parentID]
+	if !ok {
+		return append([]string{"NO PARENT FOUND"}, parentID)
+	}
+	return append(computeParentChain(trace, parentSpan.ParentID), parentID)
+}
+
+func computeOperationChainString(trace trace, spanChain []string) string {
+	result := []string{}
+	for _, spanID := range spanChain {
+		closingSpan, ok := trace.Closings[spanID]
+		if !ok {
+			result = append(result, "UNCLOSED SPAN")
+		} else {
+			result = append(result, fmt.Sprintf("%s:%s", closingSpan.ServiceName, closingSpan.OperationName))
+		}
+	}
+	return strings.Join(result, " > ")
 }
