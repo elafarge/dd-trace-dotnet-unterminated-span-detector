@@ -18,7 +18,7 @@ func findUnterminatedSpans(traces map[string]trace) unterminatedSpans {
 			var parentSpanChain = computeParentChain(trace, spanID)
 			var operationChain = computeOperationChainString(trace, parentSpanChain)
 
-			// Let's ignore strings were the root span is unclosed
+			// ignore strings were the root span is unclosed
 			if strings.HasPrefix(operationChain, "UNCLOSED SPAN") {
 				continue
 			}
@@ -26,9 +26,10 @@ func findUnterminatedSpans(traces map[string]trace) unterminatedSpans {
 			if _, ok := unclosedSpans[operationChain]; !ok {
 				unclosedSpans[operationChain] = unterminatedSpan{}
 			}
+
 			unclosedSpans[operationChain] = unterminatedSpan{
-				unclosedSpans[operationChain].Occurences + 1,
-				append(unclosedSpans[operationChain].Traces, buildTraceTree(trace, parentSpanChain[0])),
+				Occurences: unclosedSpans[operationChain].Occurences + 1,
+				Traces:     append(unclosedSpans[operationChain].Traces, buildTraceTree(trace, parentSpanChain[0])),
 			}
 
 		}
@@ -63,13 +64,13 @@ func buildTraceTree(trace trace, spanID string) *spanNode {
 	}
 
 	return &spanNode{
-		spanID,
-		opening.ParentID,
-		fmt.Sprintf("%s:%s", closing.ServiceName, closing.OperationName),
-		closing.Tags,
-		opening.OriginalRow,
-		closing.OriginalRow,
-		children,
+		SpanID:     spanID,
+		ParentID:   opening.ParentID,
+		Name:       fmt.Sprintf("%s:%s", closing.ServiceName, closing.OperationName),
+		Tags:       closing.Tags,
+		OpeningLog: opening.OriginalRow,
+		ClosingLog: closing.OriginalRow,
+		Children:   children,
 	}
 }
 

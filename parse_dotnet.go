@@ -36,7 +36,10 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 				}
 			}
 
-			traces[traceID].Openings[spanID] = spanOpening{parentID, line}
+			traces[traceID].Openings[spanID] = spanOpening{
+				ParentID:    parentID,
+				OriginalRow: line,
+			}
 		}
 
 		if dotnetClosingRegexp.MatchString(line) {
@@ -72,7 +75,13 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 				serviceName = match[1]
 			}
 
-			traces[traceID].Closings[spanID] = spanClosing{parentID, line, serviceName, operationName, tags}
+			traces[traceID].Closings[spanID] = spanClosing{
+				ParentID:      parentID,
+				OriginalRow:   line,
+				ServiceName:   serviceName,
+				OperationName: operationName,
+				Tags:          tags,
+			}
 		}
 	}
 

@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+// TODO: write E2E tests using a sample .NET app and docker-compose
+// TODO: Currently, only a parser for .NET is available, make it possible to choose another parser
+// using a CLI flag
+
 func main() {
 	// read from stdin
 	info, err := os.Stdin.Stat()
@@ -22,8 +26,6 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	// TODO: Currently, only a parser for .NET is available, make it possible to choose another parser
-	// using a CLI flag
 	parser := dotnetParser{}
 	traces := parser.extractTracesFromLogStream(reader)
 
