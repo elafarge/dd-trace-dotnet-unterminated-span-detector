@@ -54,15 +54,12 @@ images is against your security policy.
    `/var/log/datadog/dotnet/dotnet-tracer-managed-*.log`)
 
 3. Run the check, it should output a JSON payload containing information about
-   unclosed spans.
+   unclosed spans in an `./output.json` file
 
 ```shell
-docker run -i --rm elafarge/dd-trace-dotnet-unterminated-span-detector < dd-trace-log-file.log
-```
+touch output.json
 
-If the traced process is being run in a docker container
-```shell
-docker exec $CONTAINER_NAME bash -c "cat /var/log/datadog/dotnet/dotnet-tracer-managed-*.log" | docker run -i --rm elafarge/dd-trace-dotnet-unterminated-span-detector
+docker run -i --rm -v dd-trace-log-file:input.log:ro -v output.json:output.json elafarge/dd-trace-dotnet-unterminated-span-detector < dd-trace-log-file.log
 ```
 
 Contributing
