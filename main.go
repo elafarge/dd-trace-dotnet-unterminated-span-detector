@@ -57,7 +57,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(string(result))
 	if len(unclosedSpans) == 0 {
 		os.Exit(0)
 	} else {
