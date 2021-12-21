@@ -19,9 +19,17 @@ type dotnetParser struct{}
 func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]trace {
 	traces := map[string]trace{}
 	// read it line by line
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
+	lineReader := bufio.NewReader(reader)
+	for {
+		lineBytes, err := lineReader.ReadString('\n')
+
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+
+		line := string(lineBytes)
 
 		if dotnetOpeningRegexp.MatchString(line) {
 			var matches = dotnetOpeningRegexp.FindStringSubmatch(line)
@@ -51,8 +59,17 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 			var operationName string
 			var match = dotnetClosingOperationNameRegexp.FindStringSubmatch(line)
 			if match == nil {
-				for scanner.Scan() {
-					line = scanner.Text()
+				for {
+					lineBytes, err := lineReader.ReadString('\n')
+
+					if err == io.EOF {
+						break
+					} else if err != nil {
+						panic(err)
+					}
+
+					line := string(lineBytes)
+
 					match = dotnetClosingOperationNameRegexp.FindStringSubmatch(line)
 					if match != nil {
 						operationName = match[1]
@@ -90,10 +107,6 @@ func (p *dotnetParser) extractTracesFromLogStream(reader io.Reader) map[string]t
 				Tags:          tags,
 			}
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		panic(err)
 	}
 
 	return traces
